@@ -18,36 +18,36 @@ def main() -> None:
     - archiva input
     - registra todo en logs
     """
-    settings = get_settings()
-    logger = setup_logger(settings.log_dir)
+    settings = get_settings()                                           # Carga configuración desde .env (rutas, patrones, etc.)
+    logger = setup_logger(settings.log_dir)                             # Inicializa logger y define dónde se guardarán los logs
 
-    logger.info("Inicio de ejecución del pipeline")
+    logger.info("Inicio de ejecución del pipeline")                     # Marca inicio de ejecución (útil para auditoría y debugging)
 
-    latest_file = find_latest_file(
+    latest_file = find_latest_file(                                     # Busca el archivo más reciente que calce con el patrón configurado
         settings.input_dir,
         settings.opera_pattern
     )
 
-    if not latest_file:
+    if not latest_file:                                                 # Si no hay archivo, se registra y se termina la ejecución
         logger.warning("No se encontraron archivos para procesar")
         return
     
-    logger.info(f"Archivo detectado: {latest_file.name}")
+    logger.info(f"Archivo detectado: {latest_file.name}")               # Registra el nombre del archivo detectado
 
-    df = read_export(latest_file)
+    df = read_export(latest_file)                                       # Lee el archivo de entrada y lo carga en un DataFrame
     logger.info(f"Filas leídas: {len(df)}")
 
-    df = normalize_columns(df)
+    df = normalize_columns(df)                                          # Normaliza nombres de columnas, valida estructura y limpia datos
     validate(df)
     df = basic_clean(df)
 
-    output_path = save_output(df, settings.output_dir)
+    output_path = save_output(df, settings.output_dir)                  # Genera el archivo de salida (Excel/CSV limpio)
     logger.info(f"Output generado: {output_path}")
 
-    archived_path = archive_file(latest_file, settings.archive_dir)
+    archived_path = archive_file(latest_file, settings.archive_dir)     # Mueve el archivo original a la carpeta de archivo
     logger.info(f"Archivo archivado en: {archived_path}")
 
-    logger.info("Ejecución finalizada exitosamente")
+    logger.info("Ejecución finalizada exitosamente")                    # Marca ejecución exitosa
 
-if __name__ == "__main__":
+if __name__ == "__main__":                                              # Permite ejecutar este script directamente o como módulo
     main()

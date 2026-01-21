@@ -56,5 +56,5 @@ def get_settings() -> Settings:
         archive_dir=Path(os.environ["ARCHIVE_DIR"]),
         output_dir=Path(os.environ["OUTPUT_DIR"]),
         log_dir=Path(os.environ["LOG_DIR"]),
-        opera_pattern=os.environ.get("OPERA_PATTERN", "opera_export_*.csv")
+        opera_pattern=os.environ.get("OPERA_PATTERN", "opera_export_*.csv")     # Considerar cambiar patrón de ser necesario.
     )

@@ -17,7 +17,29 @@ def find_latest_file(input_dir: Path, pattern: str) -> Path | None:
     Path | None
         Ruta del archivo más reciente encontrado, o None si no hay coincidencias.
     """
-    files = sorted(input_dir.glob(pattern), key=lambda p: p.stat().st_mtime, reverse=True)
+    # input_dir.glob(pattern)
+    # → devuelve un iterable con todos los archivos que calzan con el patrón
+    #   ejemplo: [Path("opera_export_2026-01-20.csv"), Path("opera_export_2026-01-21.csv")]
+    
+    # sorted(..., key=..., reverse=True)
+    # → ordena la lista resultante usando como criterio el tiempo de modificación del archivo
+    
+    # lambda p: p.stat().st_mtime
+    # → para cada archivo (p), obtiene su metadata del sistema
+    # → st_mtime = "modification time" (timestamp en segundos)
+    # → mientras más grande, más reciente es el archivo
+
+    files = sorted(
+        input_dir.glob(pattern),          # lista de archivos que coinciden con el patrón
+        key=lambda p: p.stat().st_mtime,   # criterio: fecha de última modificación
+        reverse=True                       # orden descendente (más reciente primero)
+    )
+
+    # Si la lista no está vacía:
+    # - files[0] es el archivo más reciente
+    # Si no hay archivos:
+    # - devuelve None (para que el caller lo maneje)
+    
     return files[0] if files else None
 
 def read_export(path: Path) -> pd.DataFrame:
