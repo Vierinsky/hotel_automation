@@ -36,15 +36,22 @@ def normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
     -------
     pd.DataFrame
     """
+    # Crea una copia del DataFrame para no modificar el original
+    # Esto evita efectos secundarios en otros pasos del pipeline
     df = df.copy()
+
+    # Normaliza cada nombre de columna:
+    # - strip(): elimina espacios al inicio y al final
+    # - lower(): convierte a minúsculas
+    # - re.sub(): reemplaza uno o más espacios por "_"
     df.columns = [
         re.sub(r"\s+", "_", c.strip().lower())
         for c in df.columns
     ]
 
+    # Devuelve el DataFrame con columnas normalizadas
     return df
 
-# ========== MODIFICAR (Según necesidad de la empresa) =============
 
 def validate(df: pd.DataFrame) -> None:
     """
@@ -63,14 +70,17 @@ def validate(df: pd.DataFrame) -> None:
     ValueError
         Si faltan columnas requeridas.
     """
+    # Calcula la diferencia entre las columnas requeridas
+    # y las columnas presentes en el DataFrame
     missing = REQUIRED_COLUMNS - set(df.columns)
+
+    # Si el conjunto no está vacío, hay columnas faltantes
     if missing:
         raise ValueError(
             f"Faltan columnas requeridas: {sorted(missing)}"
         )
 
-# ========== MODIFICAR (Según necesidad de la empresa) =============
-
+# =============== MODIFICAR ====================
 def basic_clean(df: pd.DataFrame) -> pd.DataFrame:
     """
     Aplica una limpieza básica de datos al DataFrame.
@@ -90,9 +100,16 @@ def basic_clean(df: pd.DataFrame) -> pd.DataFrame:
     pd.DataFrame
         DataFrame limpio, listo para consolidación o carga.
     """
+    # Crea una copia del DataFrame para trabajar de forma segura
     df = df.copy()
 
+    # Convierte la columna 'rate' a tipo numérico
+    # errors="coerce" convierte valores inválidos en NaN
     df["rate"] = pd.to_numeric(df["rate"], errors="coerce")
-    df = df.dropna(subset=["reservation_id", "arrival_date"])
 
+    # Elimina filas donde falte información crítica
+    # (reservación o fecha de llegada)
+    df = df.dropna(subset=["reservation_id", "arrival_date"])   # TODO: MODIFICAR
+
+    # Devuelve el DataFrame limpio
     return df
