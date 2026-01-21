@@ -3,6 +3,23 @@ from pathlib import Path
 from datetime import datetime
 
 def setup_logger(log_dir: Path) -> logging.Logger:
+    """
+    Configura y devuelve un logger para el pipeline.
+
+    El logger escribe:
+    - logs persistentes en archivo (uno por ejecución)
+    - logs en consola (útil para ejecución manual)
+
+    Parameters
+    ----------
+    log_dir : Path
+        Directorio donde se almacenarán los archivos de log.
+
+    Returns
+    -------
+    logging.Logger
+        Logger configurado y listo para usar.
+    """
     log_dir.mkdir(parents=True, exist_ok=True)
     ts = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     log_file = log_dir / f"run_{ts}.log"

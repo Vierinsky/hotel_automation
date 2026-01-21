@@ -1,50 +1,50 @@
 import pandas as pd
-
-# Actualizar según configuración de planillas a transformar
+import re
 
 # La siguiente variable es un set y su nombre está en mayuscula ya que esta variable es una constante, por lo tanto, no debería mutar nunca.
 REQUIRED_COLUMNS  = {
-    "Property",             # Propiedad del hotel (ALMASPDV = Stgo, ALMASPUQ = Pta. Arenas, ALMASPUQX = Pta. Arenas Express)
-    "Confirmation Number",  # String o Int (Ej. 333568932)
-    "Rate",                 # FLOAT
-    # "Balance",
-    "Name",                 # String (Apellido, Nombre)
-    # "Room",
-    "Room Type",
-    "Arrival",              # DATE
-    # "Nights",
-    "Departure",            # DATE
-    "Reservation Type",
-    "Rate Code",            # "Rate Code" son siglas genéricas de las tarifas. Dato importante: Si la sigla contiene "SD" al final, significa "sin desayuno" 
-    # "Room Type to Charge",
-    "Travel Agent"          # Esta columna dice a que OTA corresponde la reserva
+    "property",             # Propiedad del hotel (ALMASPDV = Stgo, ALMASPUQ = Pta. Arenas, ALMASPUQX = Pta. Arenas Express)
+    "confirmation_number",  # String o Int (Ej. 333568932)
+    "rate",                 # FLOAT
+    # "balance",
+    "name",                 # String (Apellido, Nombre)
+    # "room",
+    "room_type",
+    "arrival",              # DATE
+    # "nights",
+    "departure",            # DATE
+    "reservation_type",
+    "rate_code",            # "Rate Code" son siglas genéricas de las tarifas. Dato importante: Si la sigla contiene "SD" al final, significa "sin desayuno" 
+    "room_type_to_charge",
+    "travel_agent"          # Esta columna dice a que OTA corresponde la reserva
 }
 
 def normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Normaliza los nombres de las columnas del DataFrame.
+    Normaliza los nombres de columnas del DataFrame.
 
-    - Convierte todos los nombres a minúsculas
-    - Elimina espacios al inicio y al final
-
-    Esto permite trabajar de forma consistente aunque
-    los archivos de entrada tengan diferencias de formato.
+    - Convierte a minúsculas
+    - Elimina espacios iniciales y finales
+    - Reemplaza espacios múltiples por uno
+    - Reemplaza espacios por '_'
 
     Parameters
     ----------
     df : pd.DataFrame
-        DataFrame original leído desde un archivo externo.
 
     Returns
     -------
     pd.DataFrame
-        Copia del DataFrame con nombres de columnas normalizados.
     """
     df = df.copy()
-    df.columns = [c.strip().lower() for c in df.columns]
+    df.columns = [
+        re.sub(r"\s+", "_", c.strip().lower())
+        for c in df.columns
+    ]
+
     return df
 
-# ========== MODIFICAR =============
+# ========== MODIFICAR (Según necesidad de la empresa) =============
 
 def validate(df: pd.DataFrame) -> None:
     """
@@ -69,7 +69,7 @@ def validate(df: pd.DataFrame) -> None:
             f"Faltan columnas requeridas: {sorted(missing)}"
         )
 
-# ========== MODIFICAR =============
+# ========== MODIFICAR (Según necesidad de la empresa) =============
 
 def basic_clean(df: pd.DataFrame) -> pd.DataFrame:
     """
