@@ -1,7 +1,7 @@
 from src.config import get_settings
 from src.utils_logging import setup_logger
 from src.extract import find_latest_file, read_export
-from src.transform import normalize_columns, validate, basic_clean
+from src.transform import normalize_columns, validate, basic_clean, split_name, build_customer_key_name
 from src.load import save_output, archive_file
 
 def main() -> None:
@@ -40,6 +40,9 @@ def main() -> None:
     df = normalize_columns(df)                                          # Normaliza nombres de columnas, valida estructura y limpia datos
     validate(df)
     df = basic_clean(df)
+
+    df = split_name(df)
+    df = build_customer_key_name(df)
 
     output_path = save_output(df, settings.output_dir)                  # Genera el archivo de salida (Excel/CSV limpio)
     logger.info(f"Output generado: {output_path}")

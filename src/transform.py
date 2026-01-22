@@ -80,7 +80,49 @@ def validate(df: pd.DataFrame) -> None:
             f"Faltan columnas requeridas: {sorted(missing)}"
         )
 
+
+def split_name(df:pd.DataFrame) -> pd.DataFrame:
+
+    # Espera formatp: "Apellido, Nombre"
+    df = df.copy()
+    
+    # Asegura string y limpia espacios dobles
+    df["name"] = df["name"].astype(str).str.strip()
+    df["name"] = df["name"].str.replace(r"\s+", " ", regex=True)
+
+    # Separa por la primera coma
+    parts = df["name"].str.split(",", n=1, expand=True)
+
+    # Si no hay coma, parts[1] será NaN
+    df["last_name"] = parts[0].str.strip()
+    df["first_name"] = parts[1].str.strip() if parts.shape[1] > 1 else None
+
+    return df
+
+
+def build_customer_key_name(df: pd.DataFrame) -> pd.DataFrame:
+
+    df = df.copy()
+
+    # Normaliza: minúsculas + sin espacios raros
+    ln = df["last_name"].fillna("").str.lower().str.strip()
+    fn = df["first_name"].fillna("").str.lower().str.strip()
+
+    # Key simple (En producción considerar hashear)
+    df["customer_key_name"] = (ln + "|" + fn).str.replace(r"\s+", " ", regex=True)
+
+    # "Confianza" baja porque solo es nombre
+    df["customer_key_confidence"] = "low"
+
+    return df
+
 # =============== MODIFICAR ====================
+# En un futuro habría que lidiar con deduplicación de clientes. 
+    # Para esto hay que lidiar con el problema de falta de ID único por cliente. 
+# También hay que averiguar donde se guarda la info personal de cada cliente. 
+
+# Una solución es implementar una solución temporal por fuera de Opera (Ej. Planilla propia) que cree un "client_id" 
+
 def basic_clean(df: pd.DataFrame) -> pd.DataFrame:
     """
     Aplica una limpieza básica de datos al DataFrame.
@@ -109,7 +151,7 @@ def basic_clean(df: pd.DataFrame) -> pd.DataFrame:
 
     # Elimina filas donde falte información crítica
     # (reservación o fecha de llegada)
-    df = df.dropna(subset=["reservation_id", "arrival_date"])   # TODO: MODIFICAR
+    df = df.dropna(subset=["confirmation_number", "arrival_date", "name"])   # TODO: MODIFICAR cuando corresponda
 
     # Devuelve el DataFrame limpio
     return df
