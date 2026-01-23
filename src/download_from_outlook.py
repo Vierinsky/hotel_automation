@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+import logging
 import win32com.client
 
 # Extensiones permitidas para descargar
@@ -168,3 +169,13 @@ def move_processed_emails(src_folder, dst_folder_name: str):
         # Convención: correo leído = ya procesado
         if msg.UnRead is False:
             msg.Move(dst_folder)
+
+def fetch_mail_attachments(
+        outlook_folder_path: list[str],
+        output_dir: Path,
+        allowed_ext: set[str],
+        logger: logging.Logger | None = None
+) -> int:
+    """
+    Descarga adjuntos desde una carpeta de Outlook y los guarda localmente.
+    """

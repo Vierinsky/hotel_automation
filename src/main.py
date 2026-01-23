@@ -1,10 +1,10 @@
 from src.config import get_settings
+from src.download_from_outlook import *
 from src.utils_logging import setup_logger
 from src.extract import find_latest_file, read_export
 from src.transform import normalize_columns, validate, basic_clean, split_name, build_customer_key_name
 from src.load import save_output, archive_file
 
-# TODO: INCORPORAR dowload_from_outlook.py A MAIN
 
 def main() -> None:
     """
@@ -24,6 +24,16 @@ def main() -> None:
     logger = setup_logger(settings.log_dir)                             # Inicializa logger y define dónde se guardarán los logs
 
     logger.info("Inicio de ejecución del pipeline")                     # Marca inicio de ejecución (útil para auditoría y debugging)
+
+    downloaded = fetch_mail_attachments(
+        outlook_folder_path=["Inbox", "Opera test"],
+        output_dir=settings.input_dir,
+        allowed_ext={".csv", ".xlsx"},
+        logger=logger
+    )
+
+    if downloaded:
+        logger.info(f"Adjuntos descargados desde Outlook: {downloaded}")
 
     latest_file = find_latest_file(                                     # Busca el archivo más reciente que calce con el patrón configurado
         settings.input_dir,
