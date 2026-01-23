@@ -4,6 +4,8 @@ from src.extract import find_latest_file, read_export
 from src.transform import normalize_columns, validate, basic_clean, split_name, build_customer_key_name
 from src.load import save_output, archive_file
 
+# TODO: INCORPORAR dowload_from_outlook.py A MAIN
+
 def main() -> None:
     """
     Punto de entrada principal del pipeline de automatización.

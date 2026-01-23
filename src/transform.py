@@ -82,6 +82,27 @@ def validate(df: pd.DataFrame) -> None:
 
 
 def split_name(df:pd.DataFrame) -> pd.DataFrame:
+    """
+    Separa la columna 'name' en apellido y nombre.
+
+    Espera que la columna 'name' venga en el formato:
+    "Apellido, Nombre".
+
+    Si el separador ',' no está presente, el apellido se
+    conserva y el nombre queda como valor nulo.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        DataFrame que contiene la columna 'name'.
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame con las columnas adicionales:
+        - 'last_name'
+        - 'first_name'
+    """
 
     # Espera formatp: "Apellido, Nombre"
     df = df.copy()
@@ -101,6 +122,31 @@ def split_name(df:pd.DataFrame) -> pd.DataFrame:
 
 
 def build_customer_key_name(df: pd.DataFrame) -> pd.DataFrame:
+
+    """
+    Construye un identificador provisional de cliente basado
+    únicamente en nombre y apellido.
+
+    El identificador resultante se utiliza para agrupar registros
+    que probablemente correspondan a la misma persona, sin
+    asumir unicidad real.
+
+    Dado que se basa solo en nombre, el nivel de confianza
+    asociado es bajo.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        DataFrame que contiene las columnas 'last_name' y
+        'first_name'.
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame con las columnas adicionales:
+        - 'customer_key_name'
+        - 'customer_key_confidence'
+    """
 
     df = df.copy()
 
