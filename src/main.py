@@ -23,7 +23,20 @@ def main() -> None:
     settings = get_settings()                                           # Carga configuración desde .env (rutas, patrones, etc.)
     logger = setup_logger(settings.log_dir)                             # Inicializa logger y define dónde se guardarán los logs
 
-    logger.info("Inicio de ejecución del pipeline")                     # Marca inicio de ejecución (útil para auditoría y debugging)
+    # descargar adjuntos desde Outlook a carpeta local
+    if settings.enable_outlook_download:
+        try:
+            saved = fetch_mail_attachments(
+                outlook_folder_path=settings.outlook_folder_path,
+                output_dir=settings.mail_input_dir,
+                allowed_ext=settings.mail_allowed_ext,
+                processed_folder_name=settings.outlook_processed_folder,
+                logger=logger,
+            )
+            logger.info("Inicio de ejecución del pipeline")                     # Marca inicio de ejecución (útil para auditoría y debugging)
+        except Exception as e:
+            # Para mockup, NO matar todo el pipeline por falla Outlook.
+            logger.warning(f"Falla al descargar adjuntos desde Outlook: {e}")
 
     downloaded = fetch_mail_attachments(
         outlook_folder_path=["Inbox", "Opera test"],
@@ -41,6 +54,15 @@ def main() -> None:
         allowed_ext={".csv", ".xlsx"},
         processed_folder_name="Opera test - Processed",
         logger=logger
+    )
+
+    # Decide desde qué carpeta leer archivos:
+    # - Si Outlook está habilitado → usa carpeta de adjuntos descargados
+    # - Si no → usa input_dir tradicional
+    effective_input_dir = (
+        settings.mail_input_dir
+        if settings.enable_outlook_download
+        else settings.input_dir
     )
 
     latest_file = find_latest_file(                                     # Busca el archivo más reciente que calce con el patrón configurado
