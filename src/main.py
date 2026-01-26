@@ -1,5 +1,5 @@
 from src.config import get_settings
-from src.download_from_outlook import *
+from src.download_from_outlook import fetch_mail_attachments
 from src.utils_logging import setup_logger
 from src.extract import find_latest_file, read_export
 from src.transform import normalize_columns, validate, basic_clean, split_name, build_customer_key_name
@@ -34,6 +34,14 @@ def main() -> None:
 
     if downloaded:
         logger.info(f"Adjuntos descargados desde Outlook: {downloaded}")
+
+    fetch_mail_attachments(
+        outlook_folder_path=["Inbox", "Opera test"],
+        output_dir=settings.input_dir,  # O settings.mail_input_dir si lo separamos
+        allowed_ext={".csv", ".xlsx"},
+        processed_folder_name="Opera test - Processed",
+        logger=logger
+    )
 
     latest_file = find_latest_file(                                     # Busca el archivo más reciente que calce con el patrón configurado
         settings.input_dir,

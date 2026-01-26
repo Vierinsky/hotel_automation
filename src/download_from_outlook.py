@@ -1,11 +1,10 @@
-import os
 from pathlib import Path
 import logging
 import win32com.client
 
 # Extensiones permitidas para descargar
 
-ALLOWED_EXT = {".csv", ".xlsx", ".xls"}
+DEFAULT_ALLOWED_EXT = {".csv", ".xlsx", ".xls"}
 
 def ensure_dir(p: Path) -> None:
     """
@@ -113,7 +112,7 @@ def save_attachments_from_folder(folder, output_dir: Path) -> int:
         # Outlook indexa adjuntos desde 1, no desde 0
         for i in range(1, attachments.Count + 1):
             att = attachments.Item(i)
-            name = att.Filename
+            name = att.FileName
             ext = Path(name).suffix.lower()
 
             # Ignora adjuntos no permitidos
@@ -174,8 +173,64 @@ def fetch_mail_attachments(
         outlook_folder_path: list[str],
         output_dir: Path,
         allowed_ext: set[str],
+        processed_folder_name: str | None = None,
         logger: logging.Logger | None = None
 ) -> int:
     """
     Descarga adjuntos desde una carpeta de Outlook y los guarda localmente.
+
+    Flujo:
+    - Conecta a Outlook vía COM (MAPI).
+    - Accede a la carpeta indicada (ej: ["Inbox", "Opera test"]).
+    - Descarga adjuntos con extensiones permitidas a output_dir.
+    - Marca como leídos los correos donde descargó adjuntos.
+    - (Opcional) mueve correos leídos a una carpeta de procesados.
+
+    Parameters
+    ----------
+    outlook_folder_path : list[str]
+        Ruta lógica de carpeta de Outlook (ej: ["Inbox", "Opera test"]).
+    output_dir : Path
+        Directorio local donde guardar adjuntos.
+    allowed_ext : set[str] | None
+        Extensiones permitidas. Si es None, usa DEFAULT_ALLOWED_EXT.
+    processed_folder_name : str | None
+        Si se entrega, mueve correos procesados a esta carpeta (misma jerarquía).
+    logger : logging.Logger | None
+        Logger opcional para registrar eventos. Si es None, no loggea.
+
+    Returns
+    -------
+    int
+        Número de adjuntos guardados.
     """
+
+    allowed_ext = allowed_ext or DEFAULT_ALLOWED_EXT
+
+    # Conecta con Outlook vía COM
+    outlook = win32com.client.Dispatch("Outlook.Application").GetNamespace("MAPI")
+
+    # Resuleve carpeta origen (donde tu regla mueve los correos)
+    src_folder = get_outlook_folder(outlook, outlook_folder_path)
+
+    if logger:
+        logger.info(f"Outlook: leyendo carpeta {'/'.join(outlook_folder_path)})")
+
+    # Descarga adjuntos
+    saved = save_attachments_from_folder(src_folder, output_dir, allowed_ext)
+
+    if logger:
+        logger.info(f"Outlook: adjuntos guardados = {saved}")
+    
+    # Opcional: mover correos procesados (leídos) a subcarpetas de archivo
+    if processed_folder_name:
+        try:
+            move_processed_emails(src_folder, processed_folder_name)
+            if logger:
+                logger.info(f"Outlook: correos procesados movidos a '{processed_folder_name}'")
+        except Exception as e:
+            # No matamos el pipeline por fallo de archivado de correos
+            if logger:
+                logger.warning(f"Outlook: no se pudieron mover correos procesados: {e}")
+
+    return saved
