@@ -10,7 +10,7 @@ def walk_folders(folder, prefix=""):
 def main():
     outlook = win32com.client.Dispatch("Outlook.Application").GetNamespace("MAPI")
 
-    needle = input("Texto a buscar (ej: opera): ").strip().lower()
+    needle = input("Escriba un texto a buscar (ej: opera): ").strip().lower()
     if not needle:
         print("Debes ingresar un texto.")
         return

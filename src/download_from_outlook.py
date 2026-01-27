@@ -21,12 +21,22 @@ def ensure_dir(p: Path) -> None:
     p.mkdir(parents=True, exist_ok=True)
 
 
+def _find_subfolder(parent, name: str):
+    target = name.strip().lower()
+    for f in parent.Folders:
+        if f.Name.strip().lower() == target:
+            return f
+    
+    return None
+
+
 def get_outlook_folder(namespace, path_parts: list[str]):
     """
     Obtiene una carpeta específica de Outlook a partir de su ruta lógica.
 
-    La ruta se define como una lista de nombres de carpetas,
-    por ejemplo: ["Inbox", "Opera test"].
+    Soporta dos raíces:
+    - ["Inbox", "Subcarpeta", ...]  -> parte desde Inbox (GetDefaultFolder(6))
+    - ["ROOT", "Carpeta", ...]      -> parte desde el root del store default (namespace.Folders[0])
 
     Este helper navega por la jerarquía de carpetas de Outlook
     usando la API COM.
@@ -48,21 +58,53 @@ def get_outlook_folder(namespace, path_parts: list[str]):
     ValueError
         Si la ruta no comienza en Inbox (limitación intencional del ejemplo).
     """
-    
-    # 6 corresponde a la carpeta Inbox por defecto
-    folder = namespace.GetDefaultFolder(6)
+    if not path_parts:
+        raise ValueError("path_parts no puede estar vacío")
 
-    # Asumimos que siempre partimos desde inbox
-    if path_parts[0].lower() != "inbox":
-        raise ValueError(
-            "Este helper asume Inbox como carpeta raíz. Ajustable si es necesario."
-        )
+    root_token = path_parts[0].strip().lower()
     
-    # Navega por las subcarpetas indicadas
-    for name in path_parts[1:]:
-        folder = folder.Folders[name]
+    if root_token == "Inbox":
+        # 6 corresponde a la carpeta Inbox por defecto
+        folder = namespace.GetDefaultFolder(6)
+        remaining = path_parts[1:]
+
+    elif root_token == "root":
+        # Root del store default (en el caso de este mockup: felipe.viera@hotmail.cl)
+        # namespace.Folders es la lista de stores configurados
+        folder = namespace.Folders.Item(1)  # 1-based en COM
+        remaining = path_parts[1:]
+    
+    else:
+        raise ValueError("La ruta debe comenzar con 'Inbox' o 'ROOT'")
+    
+    for name in remaining:
+        sub = _find_subfolder(folder, name)
+        if sub is None:
+            available = [f.Name for f in folder.Folders]
+            raise ValueError(
+                f"No se encontró subcarpeta '{name}' dentro de '{folder.Name}'."
+                f"Disponible: {available}"
+            )
+        folder = sub
 
     return folder
+
+    # # VERSIÓN ANTIGUA AQUÍ ABAJO:
+
+    # # 6 corresponde a la carpeta Inbox por defecto
+    # folder = namespace.GetDefaultFolder(6)
+
+    # # Asumimos que siempre partimos desde inbox
+    # if path_parts[0].lower() != "inbox":
+    #     raise ValueError(
+    #         "Este helper asume Inbox como carpeta raíz. Ajustable si es necesario."
+    #     )
+    
+    # # Navega por las subcarpetas indicadas
+    # for name in path_parts[1:]:
+    #     folder = folder.Folders[name]
+
+    # return folder
 
 
 def save_attachments_from_folder(folder, output_dir: Path) -> int:
