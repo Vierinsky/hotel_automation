@@ -71,7 +71,7 @@ def _parse_ext_list(value: str) -> set[str]:
         Conjunto de extensiones normalizadas en minúsculas.
     """
     # Espera ".csv,.xlsx" -> {".csv", ".xlsx"}
-    parts = [p.strip().lower() for p in value.splits(",") if p.strip()]
+    parts = [p.strip().lower() for p in value.split(",") if p.strip()]
     # Asegura que todas tengan punto inicial
     return {p if p.startswith(".") else f".{p}" for p in parts}
 
