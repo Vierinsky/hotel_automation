@@ -159,7 +159,7 @@ def get_settings() -> Settings:
 
     mail_input_dir = Path(os.environ.get("MAIL_INPUT_DIR", os.environ["INPUT_DIR"]))
 
-    ext_raw = os.enviro.get("MAIL_ALLOWED_EXT", ".csv,.xlsx,.xls")
+    ext_raw = os.environ.get("MAIL_ALLOWED_EXT", ".csv,.xlsx,.xls")
     mail_allowed_ext = _parse_ext_list(ext_raw)
 
     return Settings(
