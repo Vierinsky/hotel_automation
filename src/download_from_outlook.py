@@ -107,13 +107,9 @@ def get_outlook_folder(namespace, path_parts: list[str]):
     # return folder
 
 
-def save_attachments_from_folder(folder, output_dir: Path) -> int:
+def save_attachments_from_folder(folder, output_dir: Path, allowed_ext: set[str]) -> int:
     """
-    Guarda los adjuntos permitidos de los correos contenidos
-    en una carpeta de Outlook.
-
-    Solo se descargan adjuntos con extensiones definidas
-    en ALLOWED_EXT.
+    Guarda adjuntos permitidos de los correos contenidos en una carpeta de Outlook.
 
     Parameters
     ----------
@@ -121,6 +117,8 @@ def save_attachments_from_folder(folder, output_dir: Path) -> int:
         Carpeta de Outlook desde donde se leerán los correos.
     output_dir : Path
         Directorio local donde se guardarán los adjuntos.
+    allowed_ext : set[str]
+        Conjunto de extensiones permitidas (ej: {".csv", ".xlsx"}).
 
     Returns
     -------
@@ -154,11 +152,13 @@ def save_attachments_from_folder(folder, output_dir: Path) -> int:
         # Outlook indexa adjuntos desde 1, no desde 0
         for i in range(1, attachments.Count + 1):
             att = attachments.Item(i)
+
+            # En Outlook COM suele ser FileName (no Filename)
             name = att.FileName
             ext = Path(name).suffix.lower()
 
             # Ignora adjuntos no permitidos
-            if ext not in ALLOWED_EXT:
+            if ext not in allowed_ext:
                 continue
 
             dest = output_dir / name
@@ -184,7 +184,7 @@ def save_attachments_from_folder(folder, output_dir: Path) -> int:
 def move_processed_emails(src_folder, dst_folder_name: str):
     """
     Mueve correos procesados desde una carpeta de Outlook
-    a otra carpeta (por ejemplo, 'Automations_Processed').
+    a otra carpeta (por ejemplo, 'Processed').
 
     Se asume que los correos ya procesados están marcados
     como leídos.
@@ -214,7 +214,7 @@ def move_processed_emails(src_folder, dst_folder_name: str):
 def fetch_mail_attachments(
         outlook_folder_path: list[str],
         output_dir: Path,
-        allowed_ext: set[str],
+        allowed_ext: set[str] | None = None,
         processed_folder_name: str | None = None,
         logger: logging.Logger | None = None
 ) -> int:
