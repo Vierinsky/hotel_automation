@@ -198,7 +198,14 @@ def move_processed_emails(src_folder, dst_folder_name: str):
     """
 
     # La carpeta destino busca al mismo nivel que la carpeta origen
+        # Buscar destino con match tolerante (case-insensitive)
     dst_folder = src_folder.Parent.Folders[dst_folder_name]
+    if dst_folder is None:
+        available = [f.Name for f in src_folder.Parent.Folders]
+        raise ValueError(
+            f"No se encontró carpeta destino '{dst_folder_name}' dentro de '{src_folder.Parent.Name}'."
+            f"Disponibles: {available}"
+        )
 
     items = src_folder.Items
     items.Sort("[ReceivedTime]", True)
@@ -209,7 +216,10 @@ def move_processed_emails(src_folder, dst_folder_name: str):
 
         # Convención: correo leído = ya procesado
         if msg.UnRead is False:
-            msg.Move(dst_folder)
+            moved = msg.Move(dst_folder)
+            # Asegura que el item en destino quede leído
+            moved.UnRead = False
+            moved.Save()
 
 def fetch_mail_attachments(
         outlook_folder_path: list[str],
