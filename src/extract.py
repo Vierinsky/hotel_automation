@@ -42,6 +42,27 @@ def find_latest_file(input_dir: Path, pattern: str) -> Path | None:
     
     return files[0] if files else None
 
+def find_pending_files(input_dir: Path, pattern: str) -> list[Path]:
+    """
+    Retorna todos los archivos que coinciden con el patrón, ordenados
+    por fecha de modificación (más antiguos primero).
+
+    Parameters
+    ----------
+    input_dir : Path
+        Directorio donde buscar.
+    pattern : str
+        Patrón glob (ej: "*.csv", "opera_export_*.csv").
+
+    Returns
+    -------
+    list[Path]
+        Lista de archivos ordenada (oldest -> newest).
+    """
+    files = list(input_dir.glob(pattern))
+    files.sort(key=lambda p: p.stat().st_mtime)     # Más antiguo primero
+    return files
+
 def read_export(path: Path) -> pd.DataFrame:
     """
     Lee un archivo de exportación desde disco y lo carga en un DataFrame.

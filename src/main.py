@@ -1,9 +1,36 @@
 from src.config import get_settings
 from src.download_from_outlook import fetch_mail_attachments
 from src.utils_logging import setup_logger
-from src.extract import find_latest_file, read_export
+from src.extract import find_pending_files, read_export
 from src.transform import normalize_columns, validate, basic_clean, split_name, build_customer_key_name
 from src.load import save_output, archive_file
+
+def process_file(file_path, settings, logger, archive_dir):
+    """
+    Procesa un archivo individual (CSV/XLSX):
+    - lee
+    - transforma/valida
+    - genera output
+    - archiva input
+    """
+    logger.info(f"Procesando archivo: {file_path.name}")
+
+    df = read_export(file_path)
+    logger.info(f"Filas leídas: {len(df)}")
+
+    df = normalize_columns(df)
+    validate(df)
+    df = basic_clean(df)
+
+    df = split_name(df)
+    df = build_customer_key_name(df)
+
+    output_path = save_output(df, settings.output_dir)
+    logger.info(f"Output generado: {output_path}")
+
+    archived_path = archive_file(file_path, archive_dir)
+    logger.info(f"Archivo archivado en: {archived_path}")
+
 
 
 def main() -> None:
@@ -67,34 +94,63 @@ def main() -> None:
         else settings.input_dir
     )
 
-    latest_file = find_latest_file(                                     # Busca el archivo más reciente que calce con el patrón configurado
-        settings.input_dir,
-        settings.opera_pattern
+    effective_archive_dir = (
+        settings.mail_archive_dir
+        if settings.enable_outlook_download
+        else settings.archive_dir
     )
 
-    if not latest_file:                                                 # Si no hay archivo, se registra y se termina la ejecución
+    # Busca todos los archivos pendientes y procésalos
+    pending_files = find_pending_files(effective_input_dir, settings.opera_pattern)
+
+    if not pending_files:
         logger.warning("No se encontraron archivos para procesar")
         return
+
+    logger.info(f"Archivos pendientes: {len(pending_files)}")
+
+    for f in pending_files:
+        try:
+            process_file(
+                file_path=f,
+                settings=settings,
+                logger=logger,
+                archive_dir=effective_archive_dir,
+            )
+        except Exception as e:
+            # No matamos toda la corrida por un archivo malo
+            logger.error(f"Error procesando {f.name}: {e}")
+
+    logger.info("Ejecución finalizada")
+
+    # latest_file = find_latest_file(                                     # Busca el archivo más reciente que calce con el patrón configurado
+    #     settings.input_dir,
+    #     settings.opera_pattern
+    # )
+
+    # if not latest_file:                                                 # Si no hay archivo, se registra y se termina la ejecución
+    #     logger.warning("No se encontraron archivos para procesar")
+    #     return
     
-    logger.info(f"Archivo detectado: {latest_file.name}")               # Registra el nombre del archivo detectado
+    # logger.info(f"Archivo detectado: {latest_file.name}")               # Registra el nombre del archivo detectado
 
-    df = read_export(latest_file)                                       # Lee el archivo de entrada y lo carga en un DataFrame
-    logger.info(f"Filas leídas: {len(df)}")
+    # df = read_export(latest_file)                                       # Lee el archivo de entrada y lo carga en un DataFrame
+    # logger.info(f"Filas leídas: {len(df)}")
 
-    df = normalize_columns(df)                                          # Normaliza nombres de columnas, valida estructura y limpia datos
-    validate(df)
-    df = basic_clean(df)
+    # df = normalize_columns(df)                                          # Normaliza nombres de columnas, valida estructura y limpia datos
+    # validate(df)
+    # df = basic_clean(df)
 
-    df = split_name(df)
-    df = build_customer_key_name(df)
+    # df = split_name(df)
+    # df = build_customer_key_name(df)
 
-    output_path = save_output(df, settings.output_dir)                  # Genera el archivo de salida (Excel/CSV limpio)
-    logger.info(f"Output generado: {output_path}")
+    # output_path = save_output(df, settings.output_dir)                  # Genera el archivo de salida (Excel/CSV limpio)
+    # logger.info(f"Output generado: {output_path}")
 
-    archived_path = archive_file(latest_file, settings.archive_dir)     # Mueve el archivo original a la carpeta de archivo
-    logger.info(f"Archivo archivado en: {archived_path}")
+    # archived_path = archive_file(latest_file, settings.archive_dir)     # Mueve el archivo original a la carpeta de archivo
+    # logger.info(f"Archivo archivado en: {archived_path}")
 
-    logger.info("Ejecución finalizada exitosamente")                    # Marca ejecución exitosa
+    # logger.info("Ejecución finalizada exitosamente")                    # Marca ejecución exitosa
 
 if __name__ == "__main__":                                              # Permite ejecutar este script directamente o como módulo
     main()

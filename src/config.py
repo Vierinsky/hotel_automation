@@ -115,6 +115,8 @@ class Settings:
     mail_allowed_ext : set[str]
         Conjunto de extensiones de archivo permitidas para descarga
         desde Outlook.
+    mail_archive_dir: Path
+        Directorio donde se archivan los adjuntos históricos
     """
 
     input_dir: Path
@@ -128,6 +130,7 @@ class Settings:
     outlook_folder_path: list[str]
     outlook_processed_folder: str | None
     mail_input_dir: Path
+    mail_archive_dir: Path
     mail_allowed_ext: set[str] 
 
 def get_settings() -> Settings:
@@ -158,6 +161,7 @@ def get_settings() -> Settings:
         outlook_processed = outlook_processed.strip() or None
 
     mail_input_dir = Path(os.environ.get("MAIL_INPUT_DIR", os.environ["INPUT_DIR"]))
+    mail_archive_dir = Path(os.environ.get("MAIL_ARCHIVE_DIR", os.environ["ARCHIVE_DIR"]))
 
     ext_raw = os.environ.get("MAIL_ALLOWED_EXT", ".csv,.xlsx,.xls")
     mail_allowed_ext = _parse_ext_list(ext_raw)
@@ -173,5 +177,6 @@ def get_settings() -> Settings:
         outlook_folder_path=outlook_folder_path,
         outlook_processed_folder=outlook_processed,
         mail_input_dir=mail_input_dir,
+        mail_archive_dir=mail_archive_dir,
         mail_allowed_ext=mail_allowed_ext,    
     )
